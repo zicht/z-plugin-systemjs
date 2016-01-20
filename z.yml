@@ -10,7 +10,7 @@ systemjs:
 tasks:
     build:
         post:
-            - @_systemjs.build
+            - @_js.build
     js.deps:
         args:
             _root: ? cwd
@@ -19,12 +19,16 @@ tasks:
             - @_js.bower
 
     _js.npm:
-        unless: is_dir(cat(_root, "/node_modules")) || !is_file(cat(_root, "/package.json"))
-        do: npm install
+        unless: is_file(cat(_root, "/node_modules/.npm.installed")) || !is_file(cat(_root, "/package.json"))
+        do: cd $(_root) && npm install
+        post: mkdir -p $(_root)/node_modules && touch $(_root)/node_modules/.npm.installed
+        yield: true
 
     _js.bower:
-        unless: is_dir(cat(_root, "/htmldev/vendor")) || !is_file(cat(_root, "/bower.json"))
-        do: bower install -s
+        unless: is_dir(cat(_root, "/htmldev/vendor/.bower.installed")) || !is_file(cat(_root, "/bower.json"))
+        do: cd $(_root) && bower install
+        post: mkdir -p $(_root)/htmldev/vendor && touch $(_root)/htmldev/vendor/.bower.installed
+        yield: true
 
     _js.build:
         set:
