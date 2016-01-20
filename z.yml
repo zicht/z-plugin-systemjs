@@ -1,7 +1,9 @@
-globals:
-    javascript:
-        src: htmldev/src
-        target: htmldev/javascript
+systemjs:
+#    bundle_js: ~
+    system_config: javascript/system.conf.js
+    root: htmldev/
+    src: src
+    target: javascript
 
 tasks:
     build:
@@ -17,15 +19,28 @@ tasks:
     systemjs.build:
         args:
             _root: ? cwd
+        flags:
+            minify: true
+            sourcemaps: false
         pre:
             - @_systemjs.deps
+        do: |
+            cd $(_root)/$(systemjs.root) && \
+            node $(systemjs.bundle_js) \
+                $(systemjs.system_config) \
+                $(systemjs.src)/main.js \
+                $(systemjs.target)/main.min.js \
+                $(minify ? "--minify") \
+                $(sourcemaps ? "--source-maps")
+
+    babel.compile:
         do:
-            - cd $(_root) && node ./node_modules/babel/bin/babel.js $(globals.javascript.src) --stage 1 --out-dir $(globals.javascript.target) --modules system
+            - cd $(_root) && node ./node_modules/babel/bin/babel.js $(systemjs.src) --stage 1 --out-dir $(systemjs.target) --modules system
 
     _systemjs.deps:
         - cd $(_root) && bower install
         - cd $(_root) && npm install
-#
-#    babel.watch:
-#        do:
-#            - node ./node_modules/babel/bin/babel.js htmldev/src --stage 1 --out-dir htmldev/javascript --modules system --watch
+
+    babel.watch:
+        do:
+            - cd $(_root)/$(systemjs.root) && node ./node_modules/babel/bin/babel.js src --stage 1 --out-dir javascript --modules system --watch
