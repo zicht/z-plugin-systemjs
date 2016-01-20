@@ -1,0 +1,31 @@
+globals:
+    javascript:
+        src: htmldev/src
+        target: htmldev/javascript
+
+tasks:
+    build:
+        post:
+            - @_systemjs.build
+
+    _systemjs.build:
+        set:
+            _root: build.dir
+        do:
+            - @systemjs.build
+
+    systemjs.build:
+        args:
+            _root: ? cwd
+        pre:
+            - @_systemjs.deps
+        do:
+            - cd $(_root) && node ./node_modules/babel/bin/babel.js $(globals.javascript.src) --stage 1 --out-dir $(globals.javascript.target) --modules system
+
+    _systemjs.deps:
+        - cd $(_root) && bower install
+        - cd $(_root) && npm install
+#
+#    babel.watch:
+#        do:
+#            - node ./node_modules/babel/bin/babel.js htmldev/src --stage 1 --out-dir htmldev/javascript --modules system --watch
