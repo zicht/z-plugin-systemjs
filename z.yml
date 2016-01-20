@@ -4,43 +4,57 @@ systemjs:
     root: htmldev/
     src: src
     target: javascript
+    modules:
+        main.js: main.min.js
 
 tasks:
     build:
         post:
             - @_systemjs.build
+    js.deps:
+        args:
+            _root: ? cwd
+        do:
+            - @_js.npm
+            - @_js.bower
 
-    _systemjs.build:
+    _js.npm:
+        unless: is_dir(cat(_root, "/node_modules")) || !is_file(cat(_root, "/package.json"))
+        do: npm install
+
+    _js.bower:
+        unless: is_dir(cat(_root, "/htmldev/vendor")) || !is_file(cat(_root, "/bower.json"))
+        do: bower install -s
+
+    _js.build:
         set:
             _root: build.dir
+        pre:
+            - @js.deps
         do:
-            - @systemjs.build
+            - @js.build
 
-    systemjs.build:
+    js.build:
+        help: |
+            Build a transpiled file based on the configured modules
+
+            Each `systemjs.modules` mapping is bundled with `zicht-systemjs-bundle`'s `systemjs-bundle` command line
+            tool.
         args:
             _root: ? cwd
         flags:
             minify: true
             sourcemaps: false
-        pre:
-            - @_systemjs.deps
+        pre: @js.deps
         do: |
-            cd $(_root)/$(systemjs.root) && \
-            node $(systemjs.bundle_js) \
-                $(systemjs.system_config) \
-                $(systemjs.src)/main.js \
-                $(systemjs.target)/main.min.js \
-                $(minify ? "--minify") \
-                $(sourcemaps ? "--source-maps")
-
-    babel.compile:
-        do:
-            - cd $(_root) && node ./node_modules/babel/bin/babel.js $(systemjs.src) --stage 1 --out-dir $(systemjs.target) --modules system
-
-    _systemjs.deps:
-        - cd $(_root) && bower install
-        - cd $(_root) && npm install
-
-    babel.watch:
-        do:
-            - cd $(_root)/$(systemjs.root) && node ./node_modules/babel/bin/babel.js src --stage 1 --out-dir javascript --modules system --watch
+            @(for src_file, target_file in systemjs.modules)
+                cd $(_root)/$(systemjs.root) && \
+                    node $(systemjs.bundle_js) \
+                        $(systemjs.system_config) \
+                        $(systemjs.src)/$(src_file) \
+                        $(systemjs.target)/$(target_file) \
+                        $(minify ? "--minify") \
+                        $(sourcemaps ? "--source-maps")
+    js.watch:
+        pre: @js.deps
+        do: node ./node_modules/babel/bin/babel.js htmldev/src --stage 1 --out-dir htmldev/javascript --modules system --watch
