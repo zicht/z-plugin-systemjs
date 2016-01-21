@@ -1,0 +1,64 @@
+systemjs:
+#    bundle_js: ~
+    system_config: javascript/system.conf.js
+    root: htmldev/
+    src: src
+    target: javascript
+    modules:
+        main.js: main.min.js
+
+tasks:
+    build:
+        post:
+            - @_js.build
+    js.deps:
+        args:
+            _root: ? cwd
+        do:
+            - @_js.npm
+            - @_js.bower
+
+    _js.npm:
+        unless: is_file(cat(_root, "/node_modules/.npm.installed")) || !is_file(cat(_root, "/package.json"))
+        do: cd $(_root) && npm install
+        post: mkdir -p $(_root)/node_modules && touch $(_root)/node_modules/.npm.installed
+        yield: true
+
+    _js.bower:
+        unless: is_dir(cat(_root, "/htmldev/vendor/.bower.installed")) || !is_file(cat(_root, "/bower.json"))
+        do: cd $(_root) && bower install
+        post: mkdir -p $(_root)/htmldev/vendor && touch $(_root)/htmldev/vendor/.bower.installed
+        yield: true
+
+    _js.build:
+        set:
+            _root: build.dir
+        pre:
+            - @js.deps
+        do:
+            - @js.build
+
+    js.build:
+        help: |
+            Build a transpiled file based on the configured modules
+
+            Each `systemjs.modules` mapping is bundled with `zicht-systemjs-bundle`'s `systemjs-bundle` command line
+            tool.
+        args:
+            _root: ? cwd
+        flags:
+            minify: true
+            sourcemaps: false
+        pre: @js.deps
+        do: |
+            @(for src_file, target_file in systemjs.modules)
+                cd $(_root)/$(systemjs.root) && \
+                    node $(systemjs.bundle_js) \
+                        $(systemjs.system_config) \
+                        $(systemjs.src)/$(src_file) \
+                        $(systemjs.target)/$(target_file) \
+                        $(minify ? "--minify") \
+                        $(sourcemaps ? "--source-maps")
+    js.watch:
+        pre: @js.deps
+        do: node ./node_modules/babel/bin/babel.js $(systemjs.root)$(systemjs.src) --stage 1 --out-dir $(systemjs.root)$(systemjs.target) --modules system --watch
