@@ -62,3 +62,11 @@ tasks:
     js.watch:
         pre: @js.deps
         do: node ./node_modules/babel/bin/babel.js $(systemjs.root)$(systemjs.src) --stage 1 --out-dir $(systemjs.root)$(systemjs.target) --modules system --watch
+    
+    js.update:
+        pre: @js.deps
+        args:
+            _root: ? cwd
+        do: 
+            - echo '$$$$$$$$$@#@@@@@@@@@@@'
+            - node ./node_modules/babel/bin/babel.js $(_root)/$(systemjs.root)$(systemjs.src) --stage 1 --out-dir $(_root)/$(systemjs.root)$(systemjs.target) --modules system
