@@ -30,7 +30,7 @@ class Plugin extends BasePlugin
                         ->scalarNode('root')->defaultValue('htmldev')->end()
                         ->scalarNode('src')->defaultValue('src')->end()
                         ->scalarNode('target')->defaultValue('javascript')->end()
-                        ->arrayNode('modules')->prototype('scalar')->end()
+                        ->arrayNode('modules')->performNoDeepMerging()->prototype('scalar')->end()
                     ->end()
                 ->end()
             ->end()
