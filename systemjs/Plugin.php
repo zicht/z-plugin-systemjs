@@ -19,6 +19,13 @@ class Plugin extends BasePlugin
                     ->children()
                         ->scalarNode('bundle_js')
                             ->defaultValue('/usr/local/bin/systemjs-bundle')
+                            ->beforeNormalization()
+                                ->always(function($v) {
+                                    if (is_file($v)) {
+                                        return realpath($v);
+                                    }
+                                })
+                            ->end()
                             ->validate()
                                 ->ifTrue(function($f) {
                                     return !is_file($f);
