@@ -2,5 +2,6 @@
 
 Provides tasks and utils for using systemjs bundler.
 
-# Maintainer(s)
-* Joppe Aarts <joppe@zicht.nl>
+# Maintainers
+* Michael Roterman <michael@zicht.nl>
+* Boudewijn Schoon <boudewijn@zicht.nl>
