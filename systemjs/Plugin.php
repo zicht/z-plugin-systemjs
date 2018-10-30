@@ -25,6 +25,25 @@ class Plugin extends BasePlugin
                         ->arrayNode('modules')->performNoDeepMerging()->prototype('scalar')->end()
                     ->end()
                 ->end()
+                ->validate()
+                    ->always(function($v) {
+                        $bin = 'systemjs-bundle';
+                        if (empty($v['bundle_js']) || !is_file($v['bundle_js'])) {
+                            if (false !== $paths = getenv('PATH')) {
+                                foreach (explode(PATH_SEPARATOR, $paths) as $path) {
+                                    if (is_file($path . DIRECTORY_SEPARATOR . $bin)) {
+                                        $v['bundle_js'] = realpath($path . DIRECTORY_SEPARATOR . $bin);
+                                        break;
+                                    }
+                                }
+                            }
+                        }
+                        if (!is_file($v['bundle_js'])) {
+                            throw new \InvalidArgumentException("Could not find $bin, Do you need to install zicht-systemjs-bundle?");
+                        }
+                        return $v;
+                    })
+            ->end()
             ->end()
         ;
     }
