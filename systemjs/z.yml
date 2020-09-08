@@ -26,7 +26,9 @@ tasks:
 
     _js.bower:
         unless: is_dir(cat(_root, "/htmldev/vendor/.bower.installed")) || !is_file(cat(_root, "/bower.json"))
-        do: cd $(_root) && bower install
+        do:
+            - @(if is_file(cat(_root, "/node_modules/.bin/bower"))) cd $(_root) && node node_modules/.bin/bower install -q
+            - @(if !is_file(cat(_root, "/node_modules/.bin/bower"))) cd $(_root) && bower install -q
         post: mkdir -p $(_root)/htmldev/vendor && touch $(_root)/htmldev/vendor/.bower.installed
         yield: true
 
@@ -52,11 +54,11 @@ tasks:
         pre: @js.deps
         do: |
             @(for src_file, target_file in systemjs.modules)
-                cd $(_root)/$(systemjs.root) && \
+                cd $(_root) && \
                     node $(systemjs.bundle_js) \
-                        $(systemjs.system_config) \
-                        $(systemjs.src)/$(src_file) \
-                        $(systemjs.target)/$(target_file) \
+                        $(systemjs.root)$(systemjs.system_config) \
+                        $(systemjs.root)$(systemjs.src)/$(src_file) \
+                        $(systemjs.root)$(systemjs.target)/$(target_file) \
                         $(minify ? "--minify") \
                         $(sourcemaps ? "--source-maps")
     js.watch:
