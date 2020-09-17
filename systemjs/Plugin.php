@@ -29,7 +29,9 @@ class Plugin extends BasePlugin
                     ->always(function($v) {
                         $bin = 'systemjs-bundle';
                         if (empty($v['bundle_js']) || !is_file($v['bundle_js'])) {
-                            if (false !== $paths = getenv('PATH')) {
+                            if (is_file('node_modules/.bin/' . $bin)) {
+                                $v['bundle_js'] = 'node_modules/.bin/' . $bin;
+                            } elseif (false !== $paths = getenv('PATH')) {
                                 foreach (explode(PATH_SEPARATOR, $paths) as $path) {
                                     if (is_file($path . DIRECTORY_SEPARATOR . $bin)) {
                                         $v['bundle_js'] = realpath($path . DIRECTORY_SEPARATOR . $bin);
@@ -38,12 +40,10 @@ class Plugin extends BasePlugin
                                 }
                             }
                         }
-                        if (!is_file($v['bundle_js'])) {
-                            throw new \InvalidArgumentException("Could not find $bin, Do you need to install zicht-systemjs-bundle?");
-                        }
+
                         return $v;
                     })
-            ->end()
+                ->end()
             ->end()
         ;
     }
