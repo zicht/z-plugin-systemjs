@@ -17,7 +17,7 @@ class Plugin extends BasePlugin
             ->children()
                 ->arrayNode('systemjs')
                     ->children()
-                        ->scalarNode('bundle_js')->defaultValue('/usr/local/bin/systemjs-bundle')->end()
+                        ->scalarNode('bundle_js')->end()
                         ->scalarNode('system_config')->defaultValue('system.conf.js')->end()
                         ->scalarNode('root')->defaultValue('htmldev')->end()
                         ->scalarNode('src')->defaultValue('src')->end()
@@ -27,18 +27,32 @@ class Plugin extends BasePlugin
                 ->end()
                 ->validate()
                     ->always(function($v) {
-                        $bin = 'systemjs-bundle';
-                        if (empty($v['bundle_js']) || !is_file($v['bundle_js'])) {
-                            if (is_file('node_modules/.bin/' . $bin)) {
-                                $v['bundle_js'] = 'node_modules/.bin/' . $bin;
-                            } elseif (false !== $paths = getenv('PATH')) {
-                                foreach (explode(PATH_SEPARATOR, $paths) as $path) {
-                                    if (is_file($path . DIRECTORY_SEPARATOR . $bin)) {
-                                        $v['bundle_js'] = realpath($path . DIRECTORY_SEPARATOR . $bin);
-                                        break;
-                                    }
-                                }
+                        $candidates = [
+                            // is it... manually specified
+                            isset($v['bundle_js']) ? $v['bundle_js'] : null,
+
+                            // is it... installed in the project (should be the case most of the times)
+                            'node_modules/.bin/systemjs-bundle',
+
+                            // is it... installed globally (should be for very old projects)
+                            '/usr/local/bin/systemjs-bundle',
+
+                            // is it... installed somewhere else entirely
+                            $this->getBundleJsFromPath(),
+                        ];
+
+                        $bundleJs = null;
+                        foreach ($candidates as $candidate) {
+                            if (!empty($candidate) && is_file($candidate)) {
+                                $bundleJs = $candidate;
+                                break;
                             }
+                        }
+
+                        if ($bundleJs) {
+                            $v['bundle_js'] = $bundleJs;
+                        } else {
+                            throw new \Exception(sprintf('Unable to locate systemjs-bundle.  Looked in %s', implode(', ', array_filter($candidates))));
                         }
 
                         return $v;
@@ -46,5 +60,18 @@ class Plugin extends BasePlugin
                 ->end()
             ->end()
         ;
+    }
+
+    private function getBundleJsFromPath()
+    {
+        $paths = getenv('PATH');
+        if (false !== $paths) {
+            foreach (explode(PATH_SEPARATOR, $paths) as $path) {
+                if (is_file($path . DIRECTORY_SEPARATOR . 'systemjs-bundle')) {
+                    return realpath($path . DIRECTORY_SEPARATOR . 'systemjs-bundle');
+                }
+            }
+        }
+        return null;
     }
 }
