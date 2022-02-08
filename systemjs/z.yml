@@ -10,13 +10,13 @@ systemjs:
 tasks:
     build:
         post:
-            - @_js.build
+            - '@_js.build'
     js.deps:
         args:
             _root: ? cwd
         do:
-            - @_js.npm
-            - @_js.bower
+            - '@_js.npm'
+            - '@_js.bower'
 
     _js.npm:
         unless: is_file(cat(_root, "/node_modules/.npm.installed")) || !is_file(cat(_root, "/package.json"))
@@ -27,8 +27,8 @@ tasks:
     _js.bower:
         unless: is_dir(cat(_root, "/htmldev/vendor/.bower.installed")) || !is_file(cat(_root, "/bower.json"))
         do:
-            - @(if is_file(cat(_root, "/node_modules/.bin/bower"))) cd $(_root) && node node_modules/.bin/bower install -q
-            - @(if !is_file(cat(_root, "/node_modules/.bin/bower"))) cd $(_root) && bower install -q
+            - '@(if is_file(cat(_root, "/node_modules/.bin/bower"))) cd $(_root) && node node_modules/.bin/bower install -q'
+            - '@(if !is_file(cat(_root, "/node_modules/.bin/bower"))) cd $(_root) && bower install -q'
         post: mkdir -p $(_root)/htmldev/vendor && touch $(_root)/htmldev/vendor/.bower.installed
         yield: true
 
@@ -36,9 +36,9 @@ tasks:
         set:
             _root: build.dir
         pre:
-            - @js.deps
+            - '@js.deps'
         do:
-            - @js.build
+            - '@js.build'
 
     js.build:
         help: |
@@ -51,7 +51,7 @@ tasks:
         flags:
             minify: true
             sourcemaps: false
-        pre: @js.deps
+        pre: '@js.deps'
         do: |
             @(for src_file, target_file in systemjs.modules)
                 cd $(_root) && \
@@ -62,11 +62,11 @@ tasks:
                         $(minify ? "--minify") \
                         $(sourcemaps ? "--source-maps")
     js.watch:
-        pre: @js.deps
+        pre: '@js.deps'
         do: node ./node_modules/babel/bin/babel.js $(systemjs.root)$(systemjs.src) --stage 1 --out-dir $(systemjs.root)$(systemjs.target) --modules system --watch
     
     js.update:
-        pre: @js.deps
+        pre: '@js.deps'
         args:
             _root: ? cwd
         do: cd $(_root) && node ./node_modules/babel/bin/babel.js $(systemjs.root)$(systemjs.src) --stage 1 --out-dir $(systemjs.root)$(systemjs.target) --modules system
